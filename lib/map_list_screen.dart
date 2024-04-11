@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:is_first_run/is_first_run.dart';
 import 'package:random_generator/map_data.dart';
+import 'package:random_generator/sample_data.dart';
 import 'package:random_generator/shared_prefs_service.dart';
 
 
@@ -15,6 +17,7 @@ class MapListScreen extends StatefulWidget {
 
 class _MapListScreenState extends State<MapListScreen> {
   List<MapData> _maps = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -23,8 +26,21 @@ class _MapListScreenState extends State<MapListScreen> {
   }
 
   Future<void> _loadMaps() async {
+    await _loadSampleData();
     _maps = await SharedPrefsService.getMaps();
-    setState(() {});
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _loadSampleData() async {
+    bool firstRun = await IsFirstRun.isFirstRun();
+    if(firstRun){
+      List<MapData> sampleData = SampleData.getSampleData();
+      for (var mapData in sampleData) {
+        await SharedPrefsService.saveMap(mapData);
+      }
+    }
   }
 
   _navigateToNewMapScreen(MapData mapData) async{
@@ -43,7 +59,11 @@ class _MapListScreenState extends State<MapListScreen> {
       appBar: AppBar(
         title: const Text('Map List'),
       ),
-      body: ListView.builder(
+      body: _isLoading
+          ? const Center(
+        child: CircularProgressIndicator(),
+      )
+          : ListView.builder(
         itemCount: _maps.length,
         itemBuilder: (context, index) {
           final mapData = _maps[index];
