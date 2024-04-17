@@ -18,13 +18,15 @@ class _MapScreenState extends State<MapScreen> {
   String _randomKey = '';
   bool _isShowValue = false;
   Timer? _timer;
-  IntTextEditingController _timerSecondsController = IntTextEditingController();
+  final IntTextEditingController _timerSecondsController = IntTextEditingController();
+  int _remainingSeconds = 0;
 
   @override
   void initState() {
     super.initState();
     // Initialize the timer and start tracking elapsed time
     _timerSecondsController.intValue = 10;
+    _remainingSeconds = _timerSecondsController.intValue;
   }
 
   @override
@@ -47,8 +49,21 @@ class _MapScreenState extends State<MapScreen> {
 
   void _refreshTimer(int sec){
     _timer?.cancel();
-    _timer = Timer.periodic(Duration(seconds: sec), (timer) {
-      _generateRandomKey();
+    setState(() {
+      _remainingSeconds = sec;
+    });
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if(_remainingSeconds > 10){
+        _remainingSeconds--;
+      }else {
+        setState(() {
+          if (_remainingSeconds > 0) {
+            _remainingSeconds--;
+          } else {
+            _generateRandomKey();
+          }
+        });
+      }
     });
   }
 
@@ -100,35 +115,45 @@ class _MapScreenState extends State<MapScreen> {
           ),
         ],
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              _randomKey.isEmpty ? 'No key generated yet' : _randomKey,
-              style: const TextStyle(fontSize: 40),
+      body: Stack(
+        children: [
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  _randomKey.isEmpty ? 'No key generated yet' : _randomKey,
+                  style: const TextStyle(fontSize: 40),
+                ),
+                const SizedBox(height: 40),
+                ElevatedButton(
+                  onPressed: _generateRandomKey,
+                  child: const Text('Generate Random Key'),
+                ),
+                const SizedBox(height: 40),
+                if (_randomKey.isNotEmpty) // Only show button if a key is generated
+                  ElevatedButton(
+                    onPressed: _showValue,
+                    child: const Text('Show Value'),
+                  ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  height: 50,
+                  child: Text(
+                    _isShowValue ? widget.mapData.data[_randomKey]! : '',
+                    style: const TextStyle(fontSize: 40),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 40),
-            ElevatedButton(
-              onPressed: _generateRandomKey,
-              child: const Text('Generate Random Key'),
-            ),
-            const SizedBox(height: 40),
-            if (_randomKey.isNotEmpty) // Only show button if a key is generated
-              ElevatedButton(
-                onPressed: _showValue,
-                child: const Text('Show Value'),
-              ),
-            const SizedBox(height: 20),
-            SizedBox(
-              height: 50,
-              child: Text(
-                _isShowValue ? widget.mapData.data[_randomKey]! : '',
-                style: const TextStyle(fontSize: 40),
-              ),
-            ),
-          ],
-        ),
+          ),
+          if(_remainingSeconds <= 10)
+          Positioned(
+            bottom: 10,
+            left: 10,
+            child: Text(_remainingSeconds.toString(), style: const TextStyle(fontSize: 30, color: Colors.red),),
+          )
+        ]
       ),
     );
   }
