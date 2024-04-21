@@ -42,7 +42,9 @@ class _MapScreenState extends State<MapScreen> {
     }
     setState(() {
       _isShowValue = false;
-      _randomKey = widget.mapData.data.keys.toList()[Random().nextInt(widget.mapData.data.length)];
+      int seed = DateTime.now().millisecondsSinceEpoch;
+      Random random = Random(seed);
+      _randomKey = widget.mapData.data.keys.toList()[random.nextInt(widget.mapData.data.length)];
     });
     _refreshTimer(_timerSecondsController.intValue);
   }
